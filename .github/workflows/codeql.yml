@@ -48,6 +48,8 @@ jobs:
   docker:
     name: Docker Build & Run
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: analyze
 
     steps:
