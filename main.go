@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 const allowedDir = "./safe-files"
@@ -21,9 +22,21 @@ func main() {
 func readFileHandler(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Query().Get("file")
 
-	path := filepath.Join(allowedDir, filename)
+	// Resolve the absolute path of the allowed directory
+	absAllowedDir, err := filepath.Abs(allowedDir)
+	if err != nil {
+		http.Error(w, "Server error", 500)
+		return
+	}
 
-	data, err := ioutil.ReadFile(path)
+	// Resolve the absolute path of the requested file
+	absPath, err := filepath.Abs(filepath.Join(allowedDir, filename))
+	if err != nil || !strings.HasPrefix(absPath, absAllowedDir) {
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	data, err := ioutil.ReadFile(absPath)
 	if err != nil {
 		http.Error(w, "File not found", 404)
 		return
